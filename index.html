@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAT AI PRO - EDO NEW</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Dark background */
+            color: #e5e7eb; /* Light text */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .page {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden {
+            display: none !important;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+        .modal-content {
+            background-color: #1f2937; /* Darker modal background */
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 90%;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.8); /* Semi-transparent dark background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001; /* Higher than modal */
+        }
+        .loader {
+            border: 8px solid #374151; /* Lighter border */
+            border-top: 8px solid #60a5fa; /* Blue accent */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .chat-bubble {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+        .chat-bubble.user {
+            background-color: #3b82f6; /* Blue user bubble */
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.25rem;
+        }
+        .chat-bubble.ai {
+            background-color: #374151; /* Gray AI bubble */
+            color: #e5e7eb;
+            align-self: flex-start;
+            border-bottom-left-radius: 0.25rem;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .status-indicator {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            box-shadow: 0 0 5px currentColor;
+        }
+        .status-open { background-color: #10b981; color: #10b981; } /* Green */
+        .status-closed { background-color: #ef4444; color: #ef4444; } /* Red */
+
+        /* Custom button style */
+        .btn-primary {
+            background-color: #3b82f6; /* Blue */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Darker blue */
+        }
+        .btn-primary:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+        .input-field {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1rem;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+        }
+        /* Add a bit of top padding to the main content if there's no header */
+        main {
+            padding-top: 1rem; /* Adjusted for better spacing without header */
+        }
+    </style>
+</head>
+<body>
+    <!-- Header/Navbar has been removed -->
+
+    <main class="flex-grow container mx-auto w-full">
+        <!-- Page 1: Welcome -->
+        <div id="page1" class="page">
+            <div class="text-center p-6 md:p-10 bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full transform hover:scale-105 transition-transform duration-300">
+                <h1 class="text-2xl md:text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">CHAT AI PRO - EDO NEW</h1>
+                <h2 id="greeting" class="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-blue-500 to-purple-600"></h2>
+                <p class="text-lg md:text-xl mb-6 text-gray-300">Selamat datang! Kami siap melayani Anda.</p>
+                <div class="mb-6 p-4 bg-gray-700 rounded-md shadow-inner">
+                    <div id="digitalClock" class="text-4xl md:text-5xl font-mono font-semibold text-blue-300"></div>
+                    <div id="currentDate" class="text-lg text-gray-400 mt-1"></div>
+                </div>
+                <div class="flex items-center justify-center text-lg md:text-xl mb-6">
+                    <span id="serviceStatusIndicator" class="status-indicator"></span>
+                    <span id="serviceStatusText" class="font-semibold"></span>
+                </div>
+                <p id="serviceInfo" class="text-sm text-gray-400 mb-6"></p>
+                <button id="goToChatAiButton" class="btn-primary">Masuk ke Chat AI</button>
+            </div>
+        </div>
+
+        <!-- Page 2: Chat AI -->
+        <div id="page2" class="page hidden">
+             <button onclick="app.showPage('page1')" class="btn-primary absolute top-4 left-4 z-10 text-sm px-3 py-1.5">&lt; Beranda</button>
+            <div class="w-full max-w-2xl h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)] flex flex-col bg-gray-800 rounded-lg shadow-2xl overflow-hidden mt-16 md:mt-12">
+                <div class="p-3 bg-gray-900 text-center border-b border-gray-700">
+                     <h2 class="text-xl font-semibold text-white">Chat dengan AI</h2>
+                </div>
+                <div id="chatBox" class="flex-grow p-4 space-y-4 overflow-y-auto scroll-smooth">
+                    <!-- Chat messages will be appended here -->
+                     <div class="chat-bubble ai">Halo! Ada yang bisa saya bantu hari ini? Ketik <code>/requestlagu</code> untuk meminta lagu.</div>
+                </div>
+                <div class="p-4 border-t border-gray-700">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="chatInput" class="input-field flex-grow" placeholder="Ketik pesan Anda atau /requestlagu...">
+                        <button onclick="app.handleUserChatInput()" class="btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                <path d="M3.105 3.105a.5.5 0 01.707-.707l11.061 11.061a.5.5 0 01-.707.707L3.105 3.812z" />
+                                <path d="M16.895 3.105a.5.5 0 00-.707-.707L5.127 13.46l-.707.707 11.765-11.061a.5.5 0 00.707-.707zM3.105 16.188a.5.5 0 01.707.707L14.873 5.835l.707-.707L3.105 16.188z" />
+                             </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 3: Request Lagu -->
+        <div id="page3" class="page hidden">
+            <button onclick="app.navigateToChatIfOpenOrHome()" class="btn-primary absolute top-4 left-4 z-10 text-sm px-3 py-1.5">&lt; Chat AI</button>
+            <div class="w-full max-w-md p-6 md:p-8 bg-gray-800 rounded-lg shadow-2xl mt-16 md:mt-12">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center text-blue-400">Formulir Request Lagu</h2>
+                <form id="requestForm" class="space-y-6">
+                    <div>
+                        <label for="visitorName" class="block text-sm font-medium text-gray-300 mb-1">Nama Anda</label>
+                        <input type="text" id="visitorName" name="visitorName" class="input-field w-full" placeholder="Contoh: Edo" required>
+                    </div>
+                    <div>
+                        <label for="songTitle" class="block text-sm font-medium text-gray-300 mb-1">Judul Lagu & Penyanyi</label>
+                        <input type="text" id="songTitle" name="songTitle" class="input-field w-full" placeholder="Contoh: Hampa - Ari Lasso" required>
+                    </div>
+                    <button type="submit" class="btn-primary w-full !mt-8">Kirim Request</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 text-center p-6 mt-auto shadow-inner border-t border-gray-700">
+        <p class="mb-2">&copy; <span id="currentYear"></span> CHAT AI PRO - EDO NEW. All rights reserved.</p>
+        <button onclick="app.showPrivacyModal()" class="text-blue-400 hover:text-blue-300 underline text-sm">Kebijakan Privasi</button>
+    </footer>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyModal" class="modal hidden">
+        <div class="modal-content max-h-[80vh] overflow-y-auto">
+            <h3 class="text-xl font-semibold mb-4 text-blue-300">Kebijakan Privasi</h3>
+            <div class="space-y-3 text-sm text-gray-300">
+                <p>Efektif: <span id="effectiveDate"></span></p>
+                <p>Selamat datang di CHAT AI PRO - EDO NEW. Kami berkomitmen untuk melindungi privasi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, mengungkapkan, dan menjaga informasi Anda saat Anda mengunjungi website kami.</p>
+                
+                <h4 class="font-semibold mt-3 text-gray-200">1. Pengumpulan Informasi</h4>
+                <p>Kami dapat mengumpulkan informasi pribadi yang Anda berikan secara sukarela kepada kami, seperti nama dan judul lagu saat Anda menggunakan fitur permintaan lagu. Kami juga dapat mengumpulkan informasi non-pribadi secara otomatis saat Anda menavigasi situs, seperti alamat IP, jenis browser, sistem operasi, dan data penggunaan lainnya melalui cookie atau teknologi serupa.</p>
+
+                <h4 class="font-semibold mt-3 text-gray-200">2. Penggunaan Informasi</h4>
+                <p>Informasi yang kami kumpulkan digunakan untuk:</p>
+                <ul class="list-disc list-inside ml-4">
+                    <li>Menyediakan, mengoperasikan, dan memelihara website kami.</li>
+                    <li>Memproses permintaan Anda, seperti permintaan lagu.</li>
+                    <li>Meningkatkan pengalaman pengguna Anda.</li>
+                    <li>Berkomunikasi dengan Anda, termasuk menanggapi pertanyaan Anda.</li>
+                    <li>Memantau penggunaan website kami untuk tujuan analisis.</li>
+                    <li>Mematuhi kewajiban hukum.</li>
+                </ul>
+
+                <h4 class="font-semibold mt-3 text-gray-200">3. Pembagian Informasi</h4>
+                <p>Kami tidak menjual, memperdagangkan, atau menyewakan informasi pribadi Anda kepada pihak ketiga. Kami dapat membagikan informasi Anda dengan penyedia layanan pihak ketiga yang membantu kami mengoperasikan website kami atau melakukan layanan atas nama kami (misalnya, pengiriman email atau notifikasi Telegram untuk permintaan lagu), asalkan pihak tersebut setuju untuk menjaga kerahasiaan informasi ini.</p>
+                 <p>Permintaan lagu Anda (nama dan judul lagu) akan dikirimkan melalui API Telegram ke admin dan melalui email ke alamat yang ditentukan untuk pemrosesan.</p>
+
+                <h4 class="font-semibold mt-3 text-gray-200">4. Keamanan Informasi</h4>
+                <p>Kami mengambil langkah-langkah yang wajar untuk melindungi informasi pribadi Anda dari akses, penggunaan, atau pengungkapan yang tidak sah. Namun, tidak ada transmisi internet atau metode penyimpanan elektronik yang 100% aman, jadi kami tidak dapat menjamin keamanan mutlak.</p>
+
+                <h4 class="font-semibold mt-3 text-gray-200">5. Cookie</h4>
+                <p>Website kami mungkin menggunakan cookie untuk meningkatkan pengalaman Anda. Anda dapat memilih untuk mengatur browser web Anda untuk menolak cookie atau memberi tahu Anda saat cookie dikirim. Jika Anda melakukannya, perhatikan bahwa beberapa bagian Situs mungkin tidak berfungsi dengan baik.</p>
+                
+                <h4 class="font-semibold mt-3 text-gray-200">6. Perubahan pada Kebijakan Privasi Ini</h4>
+                <p>Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Kami akan memberi tahu Anda tentang perubahan apa pun dengan memposting Kebijakan Privasi baru di halaman ini. Anda disarankan untuk meninjau Kebijakan Privasi ini secara berkala untuk setiap perubahan.</p>
+
+                <h4 class="font-semibold mt-3 text-gray-200">7. Hubungi Kami</h4>
+                <p>Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini, silakan hubungi kami nomor whatsapp 6285955201695 atas nama Edo.</p>
+            </div>
+            <button onclick="app.hidePrivacyModal()" class="btn-primary mt-6 w-full">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal hidden">
+        <div class="modal-content text-center">
+            <div id="messageIcon" class="mx-auto mb-4"></div>
+            <h3 id="messageModalTitle" class="text-xl font-semibold mb-2"></h3>
+            <p id="messageModalText" class="text-gray-300"></p>
+            <button onclick="app.hideMessageModal()" class="btn-primary mt-6 w-full">OK</button>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loader"></div>
+    </div>
+
+    <script>
+        const App = function() {
+            // --- Konfigurasi Aplikasi ---
+            const GEMINI_API_KEY = "smp"; // API Key akan diinjeksi oleh environment Canvas, atau isi jika testing lokal
+            const TELEGRAM_BOT_TOKEN = "8001660414:AAFHPjashnqEWo3bAUPPJbzn4L3rwYzn4Zo";
+            const TELEGRAM_CHAT_ID = "7586858953";
+            const ADMIN_EMAIL = "edodanraraendut@gmail.com";
+
+            // --- Variabel Status Aplikasi ---
+            let currentPage = 'page1';
+            let isServiceOpen = false;
+            let chatHistory = [{ role: "model", parts: [{ text: "Halo! Ada yang bisa saya bantu hari ini? Ketik /requestlagu untuk meminta lagu." }] }];
+            let currentAiTypingMessageElement = null;
+
+            // --- Element DOM ---
+            const pages = {
+                page1: document.getElementById('page1'),
+                page2: document.getElementById('page2'),
+                page3: document.getElementById('page3'),
+            };
+            const greetingEl = document.getElementById('greeting');
+            const digitalClockEl = document.getElementById('digitalClock');
+            const currentDateEl = document.getElementById('currentDate');
+            const serviceStatusIndicatorEl = document.getElementById('serviceStatusIndicator');
+            const serviceStatusTextEl = document.getElementById('serviceStatusText');
+            const serviceInfoEl = document.getElementById('serviceInfo');
+            const goToChatAiButtonEl = document.getElementById('goToChatAiButton');
+
+
+            const chatBoxEl = document.getElementById('chatBox');
+            const chatInputEl = document.getElementById('chatInput');
+
+            const requestFormEl = document.getElementById('requestForm');
+            const visitorNameEl = document.getElementById('visitorName');
+            const songTitleEl = document.getElementById('songTitle');
+
+            const privacyModalEl = document.getElementById('privacyModal');
+            const messageModalEl = document.getElementById('messageModal');
+            const messageModalTitleEl = document.getElementById('messageModalTitle');
+            const messageModalTextEl = document.getElementById('messageModalText');
+            const messageIconEl = document.getElementById('messageIcon');
+            
+            const loadingOverlayEl = document.getElementById('loadingOverlay');
+
+            // --- Inisialisasi ---
+            function init() {
+                document.getElementById('currentYear').textContent = new Date().getFullYear();
+                document.getElementById('effectiveDate').textContent = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                updateDateTimeGreetingStatus();
+                setInterval(updateDateTimeGreetingStatus, 1000); // Update setiap detik
+
+                showPage(currentPage);
+
+                requestFormEl.addEventListener('submit', handleRequestFormSubmit);
+                chatInputEl.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        handleUserChatInput();
+                    }
+                });
+                goToChatAiButtonEl.addEventListener('click', navigateToChatIfOpenOrHome);
+            }
+
+            // --- Logika Halaman ---
+            function showPage(pageId) {
+                if (!pages[pageId]) return;
+                currentPage = pageId;
+                for (const id in pages) {
+                    pages[id].classList.add('hidden');
+                }
+                pages[pageId].classList.remove('hidden');
+                pages[pageId].style.animation = 'none'; // Reset animation
+                setTimeout(() => { pages[pageId].style.animation = ''; }, 10); // Re-trigger animation
+                
+                if (pageId === 'page3') {
+                    visitorNameEl.value = '';
+                    songTitleEl.value = '';
+                }
+            }
+            
+            function navigateToChatIfOpenOrHome() {
+                if (!isServiceOpen) {
+                    showMessageModal(
+                        'Layanan Tutup',
+                        'Maaf, layanan Chat AI saat ini sedang tutup. Layanan buka setiap hari dari pukul 05:00 hingga 23:00.',
+                        'error'
+                    );
+                } else {
+                    showPage('page2');
+                }
+            }
+
+
+            // --- Page 1: Beranda ---
+            function updateDateTimeGreetingStatus() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+
+                // Waktu & Tanggal
+                digitalClockEl.textContent = `${String(hours).padStart(2, '0')}.${String(minutes).padStart(2, '0')}.${String(seconds).padStart(2, '0')}`;
+                currentDateEl.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                // Pesan Sambutan
+                let greetingText = "Selamat Datang";
+                if (hours >= 5 && hours < 12) greetingText = "Selamat Pagi!";
+                else if (hours >= 12 && hours < 15) greetingText = "Selamat Siang!";
+                else if (hours >= 15 && hours < 18) greetingText = "Selamat Sore!";
+                else greetingText = "Selamat Malam!";
+                greetingEl.textContent = greetingText;
+
+                // Status Layanan
+                if (hours >= 5 && hours < 23) {
+                    isServiceOpen = true;
+                    serviceStatusIndicatorEl.className = 'status-indicator status-open';
+                    serviceStatusTextEl.textContent = "Layanan Buka";
+                    serviceInfoEl.textContent = "Anda dapat mengakses Chat AI kami.";
+                    goToChatAiButtonEl.disabled = false;
+                    goToChatAiButtonEl.classList.remove('opacity-50', 'cursor-not-allowed');
+                    goToChatAiButtonEl.textContent = "Masuk ke Chat AI";
+
+
+                } else {
+                    isServiceOpen = false;
+                    serviceStatusIndicatorEl.className = 'status-indicator status-closed';
+                    serviceStatusTextEl.textContent = "Layanan Tutup";
+                    serviceInfoEl.textContent = "Layanan buka pukul 05:00 - 23:00 WIB.";
+                    goToChatAiButtonEl.disabled = true;
+                    goToChatAiButtonEl.classList.add('opacity-50', 'cursor-not-allowed');
+                    goToChatAiButtonEl.textContent = "Layanan Chat Tutup";
+
+                    if (currentPage === 'page2' || currentPage === 'page3') { 
+                        showPage('page1');
+                        showMessageModal('Layanan Ditutup', 'Waktu layanan Chat AI telah berakhir. Anda akan dialihkan ke Beranda.', 'info');
+                    }
+                }
+            }
+
+            // --- Page 2: Chat AI ---
+            function addMessageToChat(sender, message, isTyping = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('chat-bubble', sender);
+
+                if (isTyping) {
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.classList.add('typing-indicator');
+                    typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+                    messageDiv.appendChild(typingIndicator);
+                    currentAiTypingMessageElement = messageDiv;
+                } else {
+                    if (message.includes("<code>/requestlagu</code>")) {
+                        messageDiv.innerHTML = message; 
+                    } else {
+                        messageDiv.textContent = message;
+                    }
+                }
+                
+                chatBoxEl.appendChild(messageDiv);
+                chatBoxEl.scrollTop = chatBoxEl.scrollHeight; 
+                return messageDiv;
+            }
+
+            async function handleUserChatInput() {
+                const userInput = chatInputEl.value.trim();
+                if (!userInput) return;
+
+                addMessageToChat('user', userInput);
+                chatInputEl.value = ''; 
+
+                chatHistory.push({ role: "user", parts: [{ text: userInput }] });
+
+                if (userInput.toLowerCase() === '/requestlagu') {
+                    if (!isServiceOpen) {
+                        showMessageModal('Layanan Tutup', 'Maaf, layanan Request Lagu hanya dapat diakses saat layanan Chat AI buka.', 'error');
+                         addMessageToChat('ai', 'Maaf, layanan Request Lagu hanya dapat diakses saat layanan Chat AI buka.');
+                        chatHistory.push({ role: "model", parts: [{ text: "Maaf, layanan Request Lagu hanya dapat diakses saat layanan Chat AI buka." }] });
+                        return;
+                    }
+                    addMessageToChat('ai', 'Baik! Saya akan mengarahkan Anda ke halaman formulir permintaan lagu.');
+                    showLoading();
+                    setTimeout(() => {
+                        showPage('page3');
+                        hideLoading();
+                    }, 1500); 
+                    chatHistory.push({ role: "model", parts: [{ text: "Baik! Saya akan mengarahkan Anda ke halaman formulir permintaan lagu." }] });
+                } else {
+                    addMessageToChat('ai', 'Mengetik...', true);
+                    try {
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+                        const payload = {
+                            contents: chatHistory,
+                        };
+                        
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.error('Gemini API Error:', errorData);
+                            throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+                        }
+
+                        const result = await response.json();
+                        let aiResponseText = "Maaf, saya tidak bisa merespons saat ini.";
+
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            aiResponseText = result.candidates[0].content.parts[0].text;
+                        } else {
+                           console.warn("Unexpected Gemini API response structure:", result);
+                        }
+                        
+                        if (currentAiTypingMessageElement) {
+                            currentAiTypingMessageElement.innerHTML = ''; 
+                            currentAiTypingMessageElement.textContent = aiResponseText;
+                            currentAiTypingMessageElement.classList.remove('typing');
+                            currentAiTypingMessageElement = null;
+                        } else { 
+                           addMessageToChat('ai', aiResponseText);
+                        }
+                        chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+
+                    } catch (error) {
+                        console.error("Error fetching AI response:", error);
+                        if (currentAiTypingMessageElement) {
+                             currentAiTypingMessageElement.textContent = "SERVER OFF🔴, silakan hubungi admin Edo.";
+                             currentAiTypingMessageElement.classList.remove('typing');
+                             currentAiTypingMessageElement = null;
+                        } else {
+                            addMessageToChat('ai', "SERVER OFF🔴, silakan hubungi admin Edo.");
+                        }
+                        chatHistory.push({ role: "model", parts: [{ text: "SERVER OFF🔴, silakan hubungi admin Edo." }] });
+                    }
+                }
+            }
+
+            // --- Page 3: Request Lagu ---
+            function generateUniqueCode(length = 8) {
+                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += characters.charAt(Math.floor(Math.random() * characters.length));
+                }
+                return result;
+            }
+
+            async function handleRequestFormSubmit(event) {
+                event.preventDefault();
+                if (!isServiceOpen) {
+                     showMessageModal('Layanan Tutup', 'Maaf, layanan Request Lagu hanya dapat diakses saat layanan Chat AI buka.', 'error');
+                     return;
+                }
+
+                const nameValue = visitorNameEl.value.trim();
+                const songTitleValue = songTitleEl.value.trim();
+
+                if (!nameValue || !songTitleValue) {
+                    showMessageModal('Input Tidak Lengkap', 'Harap isi Nama Anda dan Judul Lagu.', 'error');
+                    return;
+                }
+
+                showLoading();
+
+                const requestCode = generateUniqueCode();
+                const now = new Date();
+                const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+                
+                const waktuRequest = `${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}`;
+                const tanggalRequest = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+                const hariRequest = days[now.getDay()];
+
+                const captionMessage = `🛰️ REQUEST LAGU BARU 🛰️\n\n👤 NAMA PENGGUNA: ${nameValue}\n🎶 NAMA LAGU: ${songTitleValue}\n\n⏰ Waktu Request: ${waktuRequest}\n📅 Tanggal: ${tanggalRequest}\n📶 Hari: ${hariRequest}\n🇮🇩 Kode Request: ${requestCode}`;
+                
+                const emailMessageText = `🎉DETAIL NYA NI ADMIN EDO 🎉\n\n👤 NAMA PENGGUNAAN : ${nameValue}\n🎶 NAMA LAGU : ${songTitleValue}\n\n⏰ Waktu Request : ${waktuRequest}\n📅 Tanggal : ${tanggalRequest}\n📶 Hari : ${hariRequest}\n🇮🇩 Kode Request: ${requestCode}`;
+                const emailSubject = "🛰️ REQUEST LAGU BARU 🛰️";
+
+                const telegramImageUrl = `https://flowfalcon.dpdns.org/imagecreator/ngl?title=Dari ${encodeURIComponent(nameValue)}&text=${encodeURIComponent(songTitleValue)}`;
+                const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto?chat_id=${TELEGRAM_CHAT_ID}&photo=${encodeURIComponent(telegramImageUrl)}&caption=${encodeURIComponent(captionMessage)}&parse_mode=Markdown`;
+                const emailApiUrl = `https://fastrestapis.fasturl.cloud/tool/sendmail?to=${ADMIN_EMAIL}&from=requestlagu@gmail.com&subject=${encodeURIComponent(emailSubject)}&message=${encodeURIComponent(emailMessageText)}`;
+                
+                try {
+                    const [telegramResponse, emailResponse] = await Promise.all([
+                        fetch(telegramApiUrl),
+                        fetch(emailApiUrl)
+                    ]);
+
+                    let success = true;
+                    let errors = [];
+
+                    if (!telegramResponse.ok) {
+                        success = false;
+                        const telegramError = await telegramResponse.json().catch(() => ({description: "Unknown Telegram error"}));
+                        errors.push(`Telegram: ${telegramError.description || telegramResponse.statusText}`);
+                        console.error("Telegram API Error:", telegramError);
+                    }
+                     if (!emailResponse.ok) {
+                        success = false;
+                        const emailErrorText = await emailResponse.text().catch(() => "Unknown Email error");
+                        errors.push(`Email: ${emailErrorText.substring(0,100)}`);
+                        console.error("Email API Error:", emailErrorText);
+                    }
+
+                    if (success) {
+                        showMessageModal(
+                            'Permintaan Terkirim!',
+                            `Terima kasih, ${nameValue}! Permintaan lagu "${songTitleValue}" dengan kode ${requestCode} telah berhasil dikirim. Anda akan kembali ke Beranda.`,
+                            'success'
+                        );
+                        requestFormEl.reset();
+                        setTimeout(() => showPage('page1'), 4000); 
+                    } else {
+                         showMessageModal(
+                            'Gagal Mengirim',
+                            `Terjadi kesalahan saat mengirim permintaan:\n- ${errors.join('\n- ')}\n\nSilakan coba lagi.`,
+                            'error'
+                        );
+                    }
+                } catch (error) {
+                    console.error("Error submitting request:", error);
+                    showMessageModal('Gagal Mengirim', `Terjadi kesalahan teknis: ${error.message}. Silakan coba lagi nanti.`, 'error');
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            // --- Modals & Overlays ---
+            function showPrivacyModal() { privacyModalEl.classList.remove('hidden'); }
+            function hidePrivacyModal() { privacyModalEl.classList.add('hidden'); }
+
+            function showMessageModal(title, text, type = 'info') { 
+                messageModalTitleEl.textContent = title;
+                messageModalTextEl.innerHTML = text.replace(/\n/g, '<br>'); 
+                
+                if (type === 'success') {
+                    messageIconEl.innerHTML = `<svg class="w-16 h-16 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                } else if (type === 'error') {
+                    messageIconEl.innerHTML = `<svg class="w-16 h-16 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                } else { 
+                    messageIconEl.innerHTML = `<svg class="w-16 h-16 text-blue-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                }
+                messageModalEl.classList.remove('hidden');
+            }
+            function hideMessageModal() { messageModalEl.classList.add('hidden'); }
+
+            function showLoading() { loadingOverlayEl.classList.remove('hidden'); }
+            function hideLoading() { loadingOverlayEl.classList.add('hidden'); }
+
+            return {
+                init,
+                showPage,
+                navigateToChatIfOpenOrHome,
+                handleUserChatInput,
+                showPrivacyModal,
+                hidePrivacyModal,
+                hideMessageModal 
+            };
+        }();
+
+        document.addEventListener('DOMContentLoaded', App.init);
+        window.app = App; 
+    </script>
+</body>
+</html>

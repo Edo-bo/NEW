@@ -256,10 +256,12 @@
         </div>
     </main>
 
-    <footer class="bg-gray-900 text-gray-400 text-center p-6 mt-auto shadow-inner border-t border-gray-700">
-        <p class="mb-2">&copy; <span id="currentYear"></span> CHAT AI PRO - EDO NEW. All rights reserved.</p>
-        <button onclick="app.showPrivacyModal()" class="text-blue-400 hover:text-blue-300 underline text-sm">Kebijakan Privasi</button>
+    <!-- Footer: padding diubah dari p-6 menjadi p-4 -->
+    <footer class="bg-gray-900 text-gray-400 text-center p-4 mt-auto shadow-inner border-t border-gray-700">
+        <p class="mb-1 text-sm">&copy; <span id="currentYear"></span> CHAT AI PRO - EDO NEW. All rights reserved.</p>
+        <button onclick="app.showPrivacyModal()" class="text-blue-400 hover:text-blue-300 underline text-xs">Kebijakan Privasi</button>
     </footer>
+
 
     <!-- Privacy Policy Modal -->
     <div id="privacyModal" class="modal hidden">
@@ -328,7 +330,7 @@
             // --- Konfigurasi Aplikasi ---
             const GEMINI_API_KEY = "AIzaSyAsNYL6oaP0jRMCzwlX9Qekjn8DPWZe1dE"; // API Key akan diinjeksi oleh environment Canvas, atau isi jika testing lokal
             const TELEGRAM_BOT_TOKEN = "8001660414:AAFHPjashnqEWo3bAUPPJbzn4L3rwYzn4Zo";
-            const TELEGRAM_CHAT_ID = "7586858953";
+            const TELEGRAM_CHAT_ID = "@requestlagubyedo";
             const ADMIN_EMAIL = "edodanraraendut@gmail.com";
 
             // --- Variabel Status Aplikasi ---
@@ -605,7 +607,7 @@
                 const emailSubject = "🛰️ REQUEST LAGU BARU 🛰️";
 
                 const telegramImageUrl = `https://flowfalcon.dpdns.org/imagecreator/ngl?title=Dari ${encodeURIComponent(nameValue)}&text=${encodeURIComponent(songTitleValue)}`;
-                const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto?chat_id=${TELEGRAM_CHAT_ID}&photo=${encodeURIComponent(telegramImageUrl)}&caption=${encodeURIComponent(captionMessage)}&parse_mode=Markdown`;
+                const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto?chat_id=${encodeURIComponent(TELEGRAM_CHAT_ID)}&photo=${encodeURIComponent(telegramImageUrl)}&caption=${encodeURIComponent(captionMessage)}&parse_mode=Markdown`;
                 const emailApiUrl = `https://fastrestapis.fasturl.cloud/tool/sendmail?to=${ADMIN_EMAIL}&from=request-lagu@chat-ai-pro.com&subject=${encodeURIComponent(emailSubject)}&message=${encodeURIComponent(emailMessageText)}`;
                 
                 try {
